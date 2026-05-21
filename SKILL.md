@@ -114,6 +114,7 @@ For each script, write the **full working code** — not a stub. The extracted c
 - Use the original skill's embedded shell commands as the starting point
 - Read the original skill's prose to understand edge cases and error handling
 - Handle common failure modes (file not found, API unreachable, parse errors)
+- When classifying or categorizing inputs, validate against authoritative sources (e.g., `go list std` for Go stdlib packages) rather than heuristic shortcuts (e.g., "no dots in the name"). Heuristics produce false positives on unexpected inputs.
 
 ### Extraction checklist
 
