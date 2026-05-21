@@ -45,6 +45,7 @@ Additional overrides:
 
 - Line count < 150 AND shell_blocks < 2 AND step_headings < 2 → `skip_too_short`
 - shell_blocks < 2 AND step_headings < 2 → `skip_low_procedural` regardless of score
+- shell_blocks == 0 → `skip_low_procedural` regardless of score. A high procedural score from step headings and decision keywords alone indicates an orchestration or judgment-heavy skill (e.g., incident triage, RCA workflows), not one with scriptable work. Extraction hints (API references, mechanical operations) may count MCP tool invocations that require LLM judgment to select and parameterize — these are not the same as deterministic REST API calls that can be wrapped in a script.
 
 The heuristic is a starting point. The LLM should override the recommendation when the prose structure suggests otherwise — for example, a reference-heavy skill might have a high decision-keyword count but no real workflow.
 

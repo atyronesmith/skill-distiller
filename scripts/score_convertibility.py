@@ -33,6 +33,16 @@ def score(analysis, savings_data=None, min_savings=DEFAULT_MIN_SAVINGS):
     decisions = int(analysis.get("decision_keyword_count", 0))
     sections = int(analysis.get("headings", {}).get("total", 0))
 
+    # Extraction hints contribute to procedural score — these are prose patterns
+    # that should be scripts (API calls, mechanical comparisons, report rendering)
+    hints = analysis.get("extraction_hints", {})
+    api_refs = int(hints.get("api_references", {}).get("count", 0)
+                   if isinstance(hints.get("api_references"), dict)
+                   else hints.get("api_references", 0))
+    mechanical = int(hints.get("mechanical_operations", 0))
+    render = int(hints.get("render_patterns", 0))
+    hint_count = api_refs + mechanical + render
+
     procedural_score = (shell * 5) + (steps * 3) + min(decisions, 20)
 
     if lc < 150 and shell < 2 and steps < 2:
@@ -43,6 +53,15 @@ def score(analysis, savings_data=None, min_savings=DEFAULT_MIN_SAVINGS):
         recommendation = "skip_low_procedural"
         reason = ("Skill has few shell commands and no numbered workflow steps. "
                   "Likely style, voice, or reference material — not a procedural skill.")
+    elif shell == 0:
+        recommendation = "skip_low_procedural"
+        reason = ("Skill has zero shell blocks. "
+                  "High procedural score is driven by step headings and decision "
+                  "keywords alone, which typically indicate an orchestration or "
+                  "judgment-heavy skill (e.g., incident triage, RCA workflows), "
+                  "not one with scriptable work. Extraction hints (API refs, "
+                  "mechanical ops, render patterns) may be MCP tool calls that "
+                  "require LLM judgment to invoke, not deterministic scripts.")
     elif procedural_score >= 25:
         recommendation = "convert"
         reason = ("Procedural signals are strong (shell blocks + step headings + "
