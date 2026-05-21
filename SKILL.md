@@ -81,12 +81,39 @@ Run `scripts/extract_commands.py <input-md>`. Returns a JSON array of all bash/s
 From the analysis, the extracted commands, the savings estimate, and a careful reading of the original SKILL.md, propose a list of scripts. For each:
 
 - **name** (e.g., `analyze_thing.py`, `fetch_x.sh`)
+- **language** (`python3` or `bash`)
 - **invocation** (positional args, flags, stdin)
 - **purpose** (one sentence)
 - **output_schema** (JSON Schema draft-07)
 - **exit_codes** (semantics)
+- **code** (the full working implementation — see implementation guidelines below)
 
 Cluster related commands. Do not produce one-script-per-command — that re-creates the brittleness one layer down. A good script is a coherent operation with a clean JSON contract.
+
+### Implementation guidelines
+
+For each script, write the **full working code** — not a stub. The extracted commands from Step 6 and the original skill's prose provide enough information to implement.
+
+**Python scripts** (`*.py`):
+- Shebang: `#!/usr/bin/env python3`
+- Stdlib only — no external dependencies unless explicitly documented
+- Read input from `sys.argv` (positional args) or `sys.stdin` (JSON input)
+- Write a single JSON value to `sys.stdout` via `json.dump`
+- Log to `sys.stderr` only
+- Exit codes per the `exit_codes` spec
+
+**Bash scripts** (`*.sh`):
+- Shebang: `#!/usr/bin/env bash`
+- Start with `set -euo pipefail`
+- Use embedded Python one-liners for JSON output: `python3 -c "import json,sys; print(json.dumps({...}))"`
+- Validate arguments immediately, exit 1 on bad input
+- No external tools beyond standard POSIX + Python 3 for JSON serialization
+
+**General**:
+- The output must conform to the script's `output_schema`
+- Use the original skill's embedded shell commands as the starting point
+- Read the original skill's prose to understand edge cases and error handling
+- Handle common failure modes (file not found, API unreachable, parse errors)
 
 ### Extraction checklist
 
@@ -134,7 +161,7 @@ Build a JSON spec describing the new skill:
   ],
   "outputs": ["..."],
   "scripts": [
-    {"name": "foo.sh", "invocation": "...", "purpose": "...", "output_schema": {...}, "exit_codes": "..."}
+    {"name": "foo.sh", "language": "bash", "invocation": "...", "purpose": "...", "output_schema": {...}, "exit_codes": "...", "code": "#!/usr/bin/env bash\nset -euo pipefail\n..."}
   ]
 }
 ```
@@ -145,7 +172,7 @@ Then run:
 2. `scripts/generate_schema_doc.py < spec.json > schemas.md`
 3. `scripts/package_skill.py <output-dir> --skill-md new-skill.md --schemas schemas.md --script-stubs spec.json --critique critique.md`
 
-The output directory contains: `SKILL.md`, `scripts/` (stubs with contract docstrings and `NotImplementedError` placeholders), `schemas.md`, `CRITIQUE.md` (quality assessment from Step 2), and `IMPLEMENTATION.md` (notes for whoever fills in the stubs).
+The output directory contains: `SKILL.md`, `scripts/` (working implementations with JSON contracts), `schemas.md`, `CRITIQUE.md` (quality assessment from Step 2), and `IMPLEMENTATION.md` (testing and validation notes).
 
 ## Abort on non-zero
 
@@ -153,5 +180,5 @@ Any script returning non-zero terminates the workflow. Report the script name an
 
 ## Verdicts
 
-- **Converted.** Output directory written. Tell the user where it is, the estimated token savings, and what to do next (implement the script stubs against real artifacts).
+- **Converted.** Output directory written. Tell the user where it is, the estimated token savings, and what to do next (test the scripts against real inputs, then run the skill end-to-end).
 - **Skipped.** CRITIQUE.md written explaining the category, reasoning, and estimated savings (if applicable). The original skill is not modified.

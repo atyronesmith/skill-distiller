@@ -34,7 +34,7 @@ The workflow is a 9-step pipeline defined in `SKILL.md` (the skill definition, n
 4. `score_convertibility.py` — heuristic scoring with savings threshold → `convert` / `partial` / `skip_too_short` / `skip_low_procedural` / `skip_low_savings`. Configurable via `--min-savings` (default 1000) or `SKILL_DISTILLER_MIN_SAVINGS` env var.
 5. **LLM** — override heuristic using prose context, critique, and savings estimate; decide convert/partial/skip. For skips, `CRITIQUE.md` is the sole output.
 6. `extract_commands.py` — pull all shell code blocks with line ranges
-7. **LLM** — propose script catalog using extraction checklist (cluster commands, API queries, mechanical comparisons, report renderers into coherent scripts with JSON contracts)
+7. **LLM** — propose script catalog with working implementations using extraction checklist (cluster commands, API queries, mechanical comparisons, report renderers into coherent scripts with JSON contracts and full code)
 8. **LLM** — identify remaining judgment-only steps using the judgment filter (API calls, comparisons, and rendering are scripts, not judgment)
 9. `generate_skill_skeleton.py` + `generate_schema_doc.py` + `package_skill.py` — assemble output directory (includes `CRITIQUE.md`)
 
